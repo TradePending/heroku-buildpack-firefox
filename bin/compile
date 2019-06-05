@@ -175,3 +175,22 @@ mkdir -p $BUILD_DIR/.fonts
 ls $FONTS_DIR
 cp $FONTS_DIR/* $BUILD_DIR/.fonts/
 fc-cache -f $BUILD_DIR/.fonts
+
+topic "Configuring Xvfb for apt"
+# Freedom patch Xvfb to use /app/.. paths instead of hardcoded wrong values
+sed -i s:/usr/bin:/app/nib: "$BUILD_DIR/.apt/usr/bin/Xvfb"
+# create symlinks for Xvfb to use /app/.apt/usr/...
+ln -s /app/.apt/usr/bin $BUILD_DIR/nib
+
+topic "Setting up Xvfb display"
+# Start an Xvfb display in the background at startup, and export the display
+# number so that chrome will use it
+cat <<EOF >$BUILD_DIR/.profile.d/010_xvfb.sh
+Xvfb :42 </dev/null &> /dev/null &
+export DISPLAY=:42
+EOF
+
+# export the firefox binary location, so it's easier to tell geckodriver
+# about the non-standard location
+export FIREFOX_BIN="\$BUILD_DIR/vendor/firefox/firefox"
+EOF
